@@ -4,103 +4,67 @@ using UnityEngine;
 
 public class Clouds : MonoBehaviour
 {
-    List<Beez> movers = new List<Beez>(); // Now we have multiple Movers!
-    Attractor2_7 a;
+    Vector3 location;
+    Vector3 acceleration;
+    Vector3 velocity;
 
-    // Start is called before the first frame update
+    float topSpeed;
+    float maxX, maxY, maxZ, minX, minY, minZ;
+
     void Start()
     {
-        int numberOfMovers = 10;
-        for (int i = 0; i < numberOfMovers; i++)
-        {
-            Vector2 randomLocation = new Vector2(Random.Range(-7f, 7f), Random.Range(-7f, 7f));
-            Vector2 randomVelocity = new Vector2(Random.Range(0f, 5f), Random.Range(0f, 5f));
-            Beez m = new Beez(Random.Range(.4f, 1f), randomVelocity, randomLocation); //Each Mover is initialized randomly.
-            movers.Add(m);
-        }
-        a = new Attractor2_7();
+        maxX = 250f;
+        minX = -250f;
+        maxY = 50f;
+        minY = 20f;
+        maxZ = 250f;
+        minZ = -250f;
+
+
+        location = this.gameObject.transform.position;
+        velocity = Vector3.zero;
+        acceleration = new Vector3(-0.1f, 0f, -1f);
+        topSpeed = 1f;
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
-        foreach (Beez m in movers)
+        velocity += acceleration * Time.deltaTime;
+
+        velocity = Vector3.ClampMagnitude(velocity, topSpeed);
+
+        location += velocity * Time.deltaTime;
+        checkEdges();
+        this.gameObject.transform.position = new Vector3(location.x, location.y, location.z);
+
+
+    }
+    void checkEdges()
+    {
+        if (location.x > maxX)
         {
-            Rigidbody body = m.body;
-            Vector2 force = a.Attract(body); // Apply the attraction from the Attractor on each Mover object
-
-            m.body.AddForce(force, ForceMode.Force);
-
-            m.body.MoveRotation(m.constrainAngularMotion(force));
-            m.CheckEdges();
+            location.x -= maxX - minX;
+        }
+        else if (location.x < minX)
+        {
+            location.x += maxX - minX;
+        }
+        if (location.y > maxY)
+        {
+            location.y -= maxY - minY;
+        }
+        else if (location.y < minY)
+        {
+            location.y += minY - minY;
+        }
+        if (location.z > maxZ)
+        {
+            location.z -= maxZ - minZ;
+        }
+        else if (location.z < minZ)
+        {
+            location.z += maxZ - minZ;
         }
     }
-}
-
-public class Beez
-{
-    public Rigidbody body;
-    private GameObject gameObject;
-    public Transform transform;
-
-    private Vector3 angle;
-    private Quaternion angleRotation;
-
-    private Vector3 minimumPos, maximumPos;
-
-    public Beez(float randomMass, Vector3 initialVelocity, Vector3 initialPosition)
-    {
-        gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        GameObject.Destroy(gameObject.GetComponent<BoxCollider>());
-        transform = gameObject.transform;
-        gameObject.AddComponent<Rigidbody>();
-        body = gameObject.GetComponent<Rigidbody>();
-        body.useGravity = false;
-        Renderer renderer = gameObject.GetComponent<Renderer>();
-        renderer.material = new Material(Shader.Find("Diffuse"));
-        renderer.material.color = Color.yellow;
-        gameObject.transform.localScale = new Vector3(randomMass, randomMass, randomMass);
-
-        body.mass = randomMass;
-        body.position = initialPosition; // Default location
-        body.velocity = initialVelocity; // The extra velocity makes the mover orbit
-        //findWindowLimits();
-
-    }
-    //Constrain the forces with (arbitrary) angular motion
-
-    public Quaternion constrainAngularMotion(Vector3 angularForce)
-    {
-        //Calculate angular acceleration according to the acceleration's X horizontal direction and magnitude
-        Vector3 aAcceleration = new Vector3(angularForce.x, 0f, 0f);
-        Quaternion bodyRotation = body.rotation;
-        bodyRotation.eulerAngles += new Vector3(aAcceleration.x, 0f, 0f);
-        bodyRotation.x = Mathf.Clamp(bodyRotation.x, 0f, .1f);
-        angle += bodyRotation.eulerAngles * Time.deltaTime;
-        angleRotation = Quaternion.Euler(angle.x, angle.y, angle.z);
-        return angleRotation;
-    }
-
-    //Checks to ensure the body stays within the boundaries
-    public void CheckEdges()
-    {
-        Vector2 velocity = body.velocity;
-        if (body.position.x > maximumPos.x || body.position.x < minimumPos.x)
-        {
-            velocity.x *= -1 * Time.deltaTime; ;
-        }
-        if (body.position.y > maximumPos.y || body.position.y < minimumPos.y)
-        {
-            velocity.y *= -1 * Time.deltaTime; ;
-        }
-        body.velocity = velocity;
-    }
-
-    // private void findWindowLimits()
-    //{
-    //  Camera.main.orthographic = true;
-    //  Camera.main.orthographicSize = 10;
-    //  minimumPos = Camera.main.ScreenToWorldPoint(Vector2.zero);
-    //  maximumPos = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
-    // }
 }
