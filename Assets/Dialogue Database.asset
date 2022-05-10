@@ -383,7 +383,7 @@ MonoBehaviour:
       type: 3
       typeString: CustomFieldType_Files
     - title: Description
-      value: 
+      value: In the town
       type: 0
       typeString: 
     - title: Success Description
